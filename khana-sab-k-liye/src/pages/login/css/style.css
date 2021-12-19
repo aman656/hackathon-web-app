@@ -1,0 +1,39 @@
+.mt-20 {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoImg {
+  height: 240px;
+  width: 250px;
+}
+.inp {
+  width: 60%;
+  padding: 0.5rem;
+  border-radius: 10px;
+  outline: none !important;
+  border-color: #89c343;
+  font-size: 16px;
+}
+.btnn {
+  width: 30%;
+  font-size: 20px;
+  padding: 0.4rem;
+  background-color: #89c343;
+  border: none;
+  cursor: pointer;
+}
+.imgDiv {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.heading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #89c343;
+}
