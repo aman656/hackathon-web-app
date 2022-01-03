@@ -6,7 +6,8 @@ import Grid from "@mui/material/Grid";
 import { useNavigate } from "react-router-dom";
 import "./css/style.css";
 import Logo from "../../assets/Logo.png";
-// import { auth } from "../../firebase";
+import { auth } from "../../firebase";
+import { signInWithEmailAndPassword } from "firebase/auth";
 import { useRef } from "react";
 
 function Login() {
@@ -18,31 +19,12 @@ function Login() {
     const email = emailRef.current.value;
     const password = passRef.current.value;
 
-    await fetch(
-      `https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyCPdcGuH0U5tX6GRlPu8m5-sckdKgpK1WU`,
-      {
-        method: "POST",
-        body: JSON.stringify({
-          email: email,
-          password: password,
-          returnSecureToken: true,
-        }),
-        headers: { "Content-Type": "application/json" },
-      }
-    )
-      .then((res) => {
-        if (res.ok) {
-          return res.json();
-        } else {
-          throw new Error("Credentials Mismatch");
-        }
-      })
-      .then((data) => {
-        navigate("/home");
-      })
-      .catch((err) => {
-        alert(err.message);
-      });
+    try {
+      await signInWithEmailAndPassword(auth, email, password);
+      navigate("/home");
+    } catch (err) {
+      alert(err.message);
+    }
   };
 
   return (

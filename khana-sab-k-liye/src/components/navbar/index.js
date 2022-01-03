@@ -1,4 +1,5 @@
 import * as React from "react";
+import "./style.css";
 import { styled, useTheme } from "@mui/material/styles";
 import Box from "@mui/material/Box";
 import Drawer from "@mui/material/Drawer";
@@ -18,7 +19,14 @@ import ListItemText from "@mui/material/ListItemText";
 import InboxIcon from "@mui/icons-material/MoveToInbox";
 import MailIcon from "@mui/icons-material/Mail";
 import { db } from "../../firebase";
-import { collection, getDocs, doc } from "firebase/firestore/lite";
+import {
+  collection,
+  getDocs,
+  doc,
+  deleteDoc,
+  setDoc,
+} from "firebase/firestore";
+import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 
 const drawerWidth = 240;
@@ -69,23 +77,24 @@ const DrawerHeader = styled("div")(({ theme }) => ({
 }));
 
 export default function PersistentDrawerLeft() {
+  const navigate = useNavigate();
   const [request, setRequest] = useState([]);
-  const requestscollection = collection(db, "pending");
+  // const requestscollection = collection(db, "pending");
   const theme = useTheme();
   const [open, setOpen] = React.useState(false);
-  // useEffect(() => {
-  //   const getRequest = async () => {
-  //     const requestsnapshot = await getDocs(requestscollection);
-  //     const requestList = requestsnapshot.docs.map((doc) => doc.data);
+  useEffect(() => {
+    const getRequest = async () => {
+      const querySnapshot = await getDocs(collection(db, "Pending"));
 
-  //     console.log(requestList);
-  //     // data.forEach((doc) => {
-  //     //   console.log(doc.id, "=>", doc.data());
-  //     // });
-  //   };
-
-  //   getRequest();
-  // }, [requestscollection]);
+      querySnapshot.forEach((doc) => {
+        // doc.data() is never undefined for query doc snapshots
+        setRequest((r) => [...r, doc.data()]);
+        console.log(doc.id, " => ", doc.data());
+      });
+    };
+    getRequest();
+  }, []);
+  console.log(request);
 
   const handleDrawerOpen = () => {
     setOpen(true);
@@ -94,7 +103,21 @@ export default function PersistentDrawerLeft() {
   const handleDrawerClose = () => {
     setOpen(false);
   };
+  const rejectRequest = async (key, item) => {
+    await setDoc(doc(db, "Rejected", key), {
+      name: item.name,
+      age: item.age,
+      cnic: item.cnic,
+    });
 
+    await deleteDoc(doc(db, "Pending", key));
+  };
+
+  const acceptRequest = async (key, item) => {
+    await setDoc(doc(db, "Approved", key), item);
+
+    await deleteDoc(doc(db, "Pending", key));
+  };
   return (
     <Box sx={{ display: "flex" }}>
       <CssBaseline />
@@ -138,7 +161,7 @@ export default function PersistentDrawerLeft() {
         </DrawerHeader>
         <Divider />
         <List>
-          {["Pending", "Accepted", "Rejected", "Drafts"].map((text, index) => (
+          {["Pending", "Accepted", "Rejected"].map((text, index) => (
             <ListItem button key={text}>
               <ListItemIcon>
                 {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
@@ -149,8 +172,8 @@ export default function PersistentDrawerLeft() {
         </List>
         <Divider />
         <List>
-          {["All mail", "Trash", "Spam"].map((text, index) => (
-            <ListItem button key={text}>
+          {["Create Manger", "Manager Credentials"].map((text, index) => (
+            <ListItem button key={text} onClick={() => navigate("/branch")}>
               <ListItemIcon>
                 {index % 2 === 0 ? <InboxIcon /> : <MailIcon />}
               </ListItemIcon>
@@ -161,21 +184,7 @@ export default function PersistentDrawerLeft() {
       </Drawer>
       <Main open={open}>
         <DrawerHeader />
-        <Typography paragraph>
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-          eiusmod tempor incididunt ut labore et dolore magna aliqua. Rhoncus
-          dolor purus non enim praesent elementum facilisis leo vel. Risus at
-          ultrices mi tempus imperdiet. Semper risus in hendrerit gravida rutrum
-          quisque non tellus. Convallis convallis tellus id interdum velit
-          laoreet id donec ultrices. Odio morbi quis commodo odio aenean sed
-          adipiscing. Amet nisl suscipit adipiscing bibendum est ultricies
-          integer quis. Cursus euismod quis viverra nibh cras. Metus vulputate
-          eu scelerisque felis imperdiet proin fermentum leo. Mauris commodo
-          quis imperdiet massa tincidunt. Cras tincidunt lobortis feugiat
-          vivamus at augue. At augue eget arcu dictum varius duis at consectetur
-          lorem. Velit sed ullamcorper morbi tincidunt. Lorem donec massa sapien
-          faucibus et molestie ac.
-        </Typography>
+
         <Typography paragraph>
           Consequat mauris nunc congue nisi vitae suscipit. Fringilla est
           ullamcorper eget nulla facilisi etiam dignissim diam. Pulvinar
@@ -190,6 +199,53 @@ export default function PersistentDrawerLeft() {
           eleifend. Commodo viverra maecenas accumsan lacus vel facilisis. Nulla
           posuere sollicitudin aliquam ultrices sagittis orci a.
         </Typography>
+        <table>
+          <thead>
+            <tr>
+              <th>Requster Name</th>
+              <th>Age</th>
+              <th>Cnic number</th>
+              <th>Family Members</th>
+              <th>Selected Branch</th>
+              <th>Monthly Income</th>
+              <th>Duration</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {request.map((item) => (
+              <>
+                <tr>
+                  <td>
+                    <strong>{item.name}</strong>
+                  </td>
+                  <td>{item.age}</td>
+                  <td>{item.cnic}</td>
+                  <td>{item.familymembers}</td>
+                  <td>{item.branchSelected}</td>
+                  <td>{item.monthlyincome}</td>
+                  <td>{item.durationofhelp}</td>
+                </tr>
+                <div className="btndiv">
+                  <button
+                    className="btn"
+                    style={{ backgroundColor: "green" }}
+                    onClick={() => acceptRequest(item.cnic, item)}
+                  >
+                    Approve
+                  </button>
+                  <button
+                    className="btn"
+                    style={{ backgroundColor: "red" }}
+                    onClick={() => rejectRequest(item.cnic, item)}
+                  >
+                    Reject
+                  </button>
+                </div>
+              </>
+            ))}
+          </tbody>
+        </table>
       </Main>
     </Box>
   );
